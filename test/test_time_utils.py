@@ -13,7 +13,7 @@ class TestGpsTime(unittest.TestCase):
         bds_epoch = GpsTime.fromWeekAndTow(1014, 592738, Constellation.BDS)
 
         # GLONASS time: UTC time 2025-06-14 20:38:54.000
-        glo_datetime = datetime(2025, 6, 14, 20, 38, 54, tzinfo=timezone.utc)
+        glo_datetime = datetime(2025, 6, 14, 20, 38, 54)
         glo_epoch = GpsTime.fromDatetime(glo_datetime, Constellation.GLO)
 
         # Assert all times are equivalent

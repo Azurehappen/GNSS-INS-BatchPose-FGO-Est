@@ -44,9 +44,9 @@ def _parse_gps_block(lines):
     day = int(first[12:14])
     hour = int(first[15:17])
     minute = int(first[18:20])
-    second = int(first[21:23])
+    second = int(first[21:23])  # TODO: Use seconds and nanoseconds with pd.Timestamp
     eph.toc = GpsTime.fromDatetime(
-        datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc),
+        datetime(year, month, day, hour, minute, second),
         Constellation.GPS,
     )
     eph.sv_clock_bias = float(first[23:42])
@@ -65,7 +65,7 @@ def _parse_gps_block(lines):
     ) = _parse_float_fields(lines[5])
     (
         eph.sv_accuracy,
-        eph.sv_health,
+        sv_health,
         eph.tgd,
         eph.iodc,
     ) = _parse_float_fields(lines[6])
@@ -77,7 +77,8 @@ def _parse_gps_block(lines):
         eph.gps_week, trans_time, Constellation.GPS
     )
 
-    if int(eph.sv_health) != 0:
+    eph.sv_health = int(sv_health)
+    if eph.sv_health != 0:
         return None
 
     return eph
@@ -93,29 +94,23 @@ def _parse_glo_block(lines):
     day = int(first[12:14])
     hour = int(first[15:17])
     minute = int(first[18:20])
-    second = int(first[21:23])
+    second = int(first[21:23])  # TODO: Use seconds and nanoseconds with pd.Timestamp
     eph.toc = GpsTime.fromDatetime(
-        datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc),
+        datetime(year, month, day, hour, minute, second),
         Constellation.GLO,
     )
     eph.sv_clock_bias = float(first[23:42])
     eph.sv_relative_freq_bias = float(first[42:61])
     eph.message_frame_time = float(first[61:80])
 
-    eph.x_pos, eph.x_vel, eph.x_acc, eph.health = _parse_float_fields(lines[1])
+    eph.x_pos, eph.x_vel, eph.x_acc, health = _parse_float_fields(lines[1])
     eph.y_pos, eph.y_vel, eph.y_acc, eph.freq_number = _parse_float_fields(lines[2])
     eph.z_pos, eph.z_vel, eph.z_acc, eph.age_of_oper_info = _parse_float_fields(
         lines[3]
     )
 
-    # RINEX provides GLONASS message frame time as seconds within the current
-    # GPS week. ``GpsTime.fromWeekAndTow`` does not support GLONASS directly, so
-    # treat it as GPS time.
-    eph.message_frame_time = GpsTime.fromWeekAndTow(
-        eph.toc.gps_week, eph.message_frame_time, Constellation.GPS
-    )
-
-    if int(eph.health) != 0:
+    eph.health = int(health)
+    if eph.health != 0:
         return None
 
     return eph
@@ -131,9 +126,9 @@ def _parse_gal_block(lines):
     day = int(first[12:14])
     hour = int(first[15:17])
     minute = int(first[18:20])
-    second = int(first[21:23])
+    second = int(first[21:23])  # TODO: Use seconds and nanoseconds with pd.Timestamp
     eph.toc = GpsTime.fromDatetime(
-        datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc),
+        datetime(year, month, day, hour, minute, second),
         Constellation.GAL,
     )
     eph.sv_clock_bias = float(first[23:42])
@@ -152,7 +147,7 @@ def _parse_gal_block(lines):
     ) = _parse_float_fields(lines[5])
     (
         eph.sisa,
-        eph.sv_health,
+        sv_health,
         eph.bgd_e1e5a,
         eph.bgd_e1e5b,
     ) = _parse_float_fields(lines[6])
@@ -165,16 +160,16 @@ def _parse_gal_block(lines):
         eph.gal_week, trans_time, Constellation.GAL
     )
 
-    sv_health = int(eph.sv_health)
+    eph.sv_health = int(sv_health)
     # Determine health validity flags according to Galileo ICD
-    eph.e1b_is_valid = (sv_health & 0x1) == 0
-    eph.e1b_is_health = ((sv_health >> 1) & 0x3) == 0
-    eph.e5a_is_valid = ((sv_health >> 3) & 0x1) == 0
-    eph.e5a_is_health = ((sv_health >> 4) & 0x3) == 0
-    eph.e5b_is_valid = ((sv_health >> 6) & 0x1) == 0
-    eph.e5b_is_health = ((sv_health >> 7) & 0x3) == 0
+    eph.e1b_is_valid = (eph.sv_health & 0x1) == 0
+    eph.e1b_is_health = ((eph.sv_health >> 1) & 0x3) == 0
+    eph.e5a_is_valid = ((eph.sv_health >> 3) & 0x1) == 0
+    eph.e5a_is_health = ((eph.sv_health >> 4) & 0x3) == 0
+    eph.e5b_is_valid = ((eph.sv_health >> 6) & 0x1) == 0
+    eph.e5b_is_health = ((eph.sv_health >> 7) & 0x3) == 0
 
-    if eph.data_source != 258 or sv_health != 0:
+    if eph.data_source != 258 or eph.sv_health != 0:
         return None
 
     return eph
@@ -190,9 +185,9 @@ def _parse_bds_block(lines):
     day = int(first[12:14])
     hour = int(first[15:17])
     minute = int(first[18:20])
-    second = int(first[21:23])
+    second = int(first[21:23])  # TODO: Use seconds and nanoseconds with pd.Timestamp
     eph.toc = GpsTime.fromDatetime(
-        datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc),
+        datetime(year, month, day, hour, minute, second),
         Constellation.BDS,
     )
     eph.sv_clock_bias = float(first[23:42])
@@ -211,19 +206,20 @@ def _parse_bds_block(lines):
     ) = _parse_float_fields(lines[5])
     (
         eph.sv_accuracy,
-        eph.sv_health,
+        sv_health,
         eph.tgd1,
         eph.tgd2,
     ) = _parse_float_fields(lines[6])
     trans_time, eph.aodc, _, _ = _parse_float_fields(lines[7])
 
     eph.bds_week = int(bds_week)
+    eph.sv_health = int(sv_health)
     eph.toe = GpsTime.fromWeekAndTow(eph.bds_week, toe, Constellation.BDS)
     eph.transmission_time = GpsTime.fromWeekAndTow(
         eph.bds_week, trans_time, Constellation.BDS
     )
 
-    if int(eph.sv_health) != 0:
+    if eph.sv_health != 0:
         return None
 
     return eph
@@ -253,36 +249,28 @@ def parse_rinex_nav(file_path: str) -> EphemerisData:
                 ]
                 eph = _parse_gps_block(body)
                 if eph:
-                    eph_data.add_ephemeris(
-                        Constellation.GPS, eph.prn, eph.toc, eph
-                    )
+                    eph_data.add_ephemeris(Constellation.GPS, eph.prn, eph.toc, eph)
             elif const == "R":
                 body = [line.rstrip("\n")] + [
                     f.readline().rstrip("\n") for _ in range(3)
                 ]
                 eph = _parse_glo_block(body)
                 if eph:
-                    eph_data.add_ephemeris(
-                        Constellation.GLO, eph.prn, eph.toc, eph
-                    )
+                    eph_data.add_ephemeris(Constellation.GLO, eph.prn, eph.toc, eph)
             elif const == "E":
                 body = [line.rstrip("\n")] + [
                     f.readline().rstrip("\n") for _ in range(7)
                 ]
                 eph = _parse_gal_block(body)
                 if eph:
-                    eph_data.add_ephemeris(
-                        Constellation.GAL, eph.prn, eph.toc, eph
-                    )
+                    eph_data.add_ephemeris(Constellation.GAL, eph.prn, eph.toc, eph)
             elif const == "C":
                 body = [line.rstrip("\n")] + [
                     f.readline().rstrip("\n") for _ in range(7)
                 ]
                 eph = _parse_bds_block(body)
                 if eph:
-                    eph_data.add_ephemeris(
-                        Constellation.BDS, eph.prn, eph.toc, eph
-                    )
+                    eph_data.add_ephemeris(Constellation.BDS, eph.prn, eph.toc, eph)
             else:
                 # Unsupported constellation
                 pass

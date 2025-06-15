@@ -5,6 +5,7 @@ from typing import Any, Optional, TYPE_CHECKING
 
 from numpy import nan
 import constants.gnss_constants as gnssConst
+
 if TYPE_CHECKING:
     from utilities.time_utils import GpsTime
 
