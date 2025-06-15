@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import constants.gnss_constants as gnssConst
 from utilities.gnss_data_structures import Constellation
 
@@ -45,9 +45,12 @@ class GpsTime:
 
     @classmethod
     def fromDatetime(
-        cls, datetime: float, constellation: Constellation = Constellation.GPS
+        cls, datetime: datetime, constellation: Constellation = Constellation.GPS
     ):
         """Initialize from constellation system datatime."""
+        # Ensure both are offset-naive
+        datetime = datetime.replace(tzinfo=None)
+
         if constellation == Constellation.GPS:
             dt = datetime - gnssConst.GpsConstants.START_TIME_IN_UTC
             return cls(dt.total_seconds())

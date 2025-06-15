@@ -70,7 +70,7 @@ class GpsConstants:
     }
 
     # GPS start time in UTC
-    START_TIME_IN_UTC = datetime(1980, 1, 6, 0, 0, 0, tzinfo=timezone.utc)
+    START_TIME_IN_UTC = datetime(1980, 1, 6, 0, 0, 0)
 
     # Maximum duration to use ephemeris in seconds
     MAX_DURATION_TO_EPH = 7200.0
@@ -199,7 +199,7 @@ class GalConstants:
     }
 
     # Galileo start time in UTC
-    START_TIME_IN_UTC = datetime(1999, 8, 21, 23, 59, 47, tzinfo=timezone.utc)
+    START_TIME_IN_UTC = datetime(1999, 8, 21, 23, 59, 47)
 
     # Maximum duration to use ephemeris in seconds
     MAX_DURATION_TO_EPH = 3600.0
@@ -272,7 +272,7 @@ class BdsConstants:
     }
 
     # Beidou start time in UTC
-    START_TIME_IN_UTC = datetime(2006, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    START_TIME_IN_UTC = datetime(2006, 1, 1, 0, 0, 0)
 
     # Maximum duration to use ephemeris in seconds
     MAX_DURATION_TO_EPH = 3600.0

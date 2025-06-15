@@ -1,5 +1,13 @@
+from __future__ import annotations
+
 from enum import Enum
+from typing import Any, Optional, TYPE_CHECKING
+
 from numpy import nan
+import constants.gnss_constants as gnssConst
+
+if TYPE_CHECKING:
+    from utilities.time_utils import GpsTime
 
 
 class Constellation(Enum):
@@ -60,6 +68,68 @@ class EphemerisData:
         self.glo_eph_index_lookup = {}
         self.gal_eph_index_lookup = {}
         self.bds_eph_index_lookup = {}
+
+    def _get_dict_and_lookup(self, constellation: Constellation):
+        if constellation == Constellation.GPS:
+            return (
+                self.gps_ephemerides,
+                self.gps_eph_index_lookup,
+                gnssConst.GpsConstants.MAX_DURATION_TO_EPH,
+            )
+        elif constellation == Constellation.GLO:
+            return (
+                self.glo_ephemerides,
+                self.glo_eph_index_lookup,
+                gnssConst.GloConstants.MAX_DURATION_TO_EPH,
+            )
+        elif constellation == Constellation.GAL:
+            return (
+                self.gal_ephemerides,
+                self.gal_eph_index_lookup,
+                gnssConst.GalConstants.MAX_DURATION_TO_EPH,
+            )
+        elif constellation == Constellation.BDS:
+            return (
+                self.bds_ephemerides,
+                self.bds_eph_index_lookup,
+                gnssConst.BdsConstants.MAX_DURATION_TO_EPH,
+            )
+        else:
+            raise ValueError(f"Unsupported constellation {constellation}")
+
+    def add_ephemeris(
+        self, constellation: Constellation, prn: int, time: "GpsTime", eph: Any
+    ) -> None:
+        """Add an ephemeris entry for the given PRN and constellation."""
+
+        eph_dict, idx_lookup, _ = self._get_dict_and_lookup(constellation)
+        eph_dict.setdefault(prn, []).append((time, eph))
+        idx_lookup.setdefault(prn, 0)
+
+    def get_current_ephemeris(
+        self, constellation: Constellation, prn: int, gps_time: "GpsTime"
+    ) -> Optional[Any]:
+        """Return the ephemeris covering ``gps_time`` if available."""
+
+        eph_dict, index_lookup, max_dur = self._get_dict_and_lookup(constellation)
+        eph_list = eph_dict.get(prn)
+        if not eph_list:
+            return None
+        idx = index_lookup.get(prn, 0)
+
+        # Move index forward to the first ephemeris time greater than gps_time
+        while idx < len(eph_list) and gps_time > eph_list[idx][0]:
+            idx += 1
+
+        if idx >= len(eph_list):
+            return None
+
+        diff = eph_list[idx][0] - gps_time
+        if diff < 0 or diff >= max_dur:
+            return None
+
+        index_lookup[prn] = idx
+        return eph_list[idx][1]
 
 
 class GpsEphemeris:
