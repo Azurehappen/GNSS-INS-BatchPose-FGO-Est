@@ -15,9 +15,8 @@ class GpsTime:
 
     def __init__(self, gps_timestamp: float):
         """Initialize with absolute GPS timestamp (seconds since GPS epoch)."""
-        self.gps_timestamp = (
-            gps_timestamp  # seconds since GPS epoch (1980-01-06 00:00:00 UTC)
-        )
+        # seconds since GPS epoch (1980-01-06 00:00:00 UTC), Support to microsecond precision
+        self.gps_timestamp = gps_timestamp
         self.gps_week = int(gps_timestamp // 604800)
         self.gps_tow = gps_timestamp % 604800  # Time of week in seconds
 
