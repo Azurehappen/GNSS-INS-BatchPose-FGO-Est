@@ -2,6 +2,7 @@ import os
 import sys
 import tempfile
 import unittest
+import pandas as pd
 from textwrap import dedent
 
 # Add the project root directory to sys.path
@@ -57,7 +58,6 @@ class TestRinexParser(unittest.TestCase):
                  3.492000000000e+05 0.000000000000e+00
             """
         ).strip()
-        print(data)
         tmp = tempfile.NamedTemporaryFile(delete=False, mode="w+")
         tmp.write(data)
         tmp.flush()
@@ -80,7 +80,9 @@ class TestRinexParser(unittest.TestCase):
         gps_eph = eph_data.gps_ephemerides[22][0][1]
         self.assertEqual(
             epoch_time,
-            GpsTime.fromDatetime(datetime(2019, 5, 9, 18, 0, 0), Constellation.GPS),
+            GpsTime.fromDatetime(
+                pd.Timestamp("2019-05-09 18:00:00"), Constellation.GPS
+            ),
         )
         self.assertEqual(gps_eph.prn, 22)
         self.assertEqual(gps_eph.toc.gps_week, 2052)
@@ -97,7 +99,9 @@ class TestRinexParser(unittest.TestCase):
         glo_eph = eph_data.glo_ephemerides[1][0][1]
         self.assertEqual(
             epoch_time,
-            GpsTime.fromDatetime(datetime(2019, 5, 9, 21, 15, 0), Constellation.GLO),
+            GpsTime.fromDatetime(
+                pd.Timestamp(2019, 5, 9, 21, 15, 0), Constellation.GLO
+            ),
         )
         self.assertEqual(glo_eph.prn, 1)
         self.assertEqual(glo_eph.toc.gps_week, 2052)
@@ -109,7 +113,7 @@ class TestRinexParser(unittest.TestCase):
         gal_eph = eph_data.gal_ephemerides[1][0][1]
         self.assertEqual(
             epoch_time,
-            GpsTime.fromDatetime(datetime(2019, 5, 9, 0, 20, 0), Constellation.GAL),
+            GpsTime.fromDatetime(pd.Timestamp(2019, 5, 9, 0, 20, 0), Constellation.GAL),
         )
         self.assertEqual(gal_eph.prn, 1)
         self.assertEqual(gal_eph.toc.gps_week, 2052)
@@ -122,7 +126,7 @@ class TestRinexParser(unittest.TestCase):
         bds_eph = eph_data.bds_ephemerides[1][0][1]
         self.assertEqual(
             epoch_time,
-            GpsTime.fromDatetime(datetime(2019, 5, 9, 1, 0, 0), Constellation.BDS),
+            GpsTime.fromDatetime(pd.Timestamp(2019, 5, 9, 1, 0, 0), Constellation.BDS),
         )
         self.assertEqual(bds_eph.prn, 1)
         self.assertEqual(bds_eph.toc.gps_week, 2052)

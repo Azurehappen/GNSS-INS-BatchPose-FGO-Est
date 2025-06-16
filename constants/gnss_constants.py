@@ -1,6 +1,6 @@
 from enum import Enum
 import numpy as np
-from datetime import datetime, timezone
+import pandas as pd
 
 SPEED_OF_LIGHT_MS = 299792458.0  # Speed of light in meters per second
 
@@ -69,8 +69,8 @@ class GpsConstants:
         5: L5_WAVELENGTH_M,
     }
 
-    # GPS start time in UTC
-    START_TIME_IN_UTC = datetime(1980, 1, 6, 0, 0, 0)
+    # GPS start time in UTC with nanosecond precision support
+    START_TIME_IN_UTC = pd.Timestamp("1980-01-06T00:00:00")
 
     # Maximum duration to use ephemeris in seconds
     MAX_DURATION_TO_EPH = 7200.0
@@ -199,7 +199,7 @@ class GalConstants:
     }
 
     # Galileo start time in UTC
-    START_TIME_IN_UTC = datetime(1999, 8, 21, 23, 59, 47)
+    START_TIME_IN_UTC = pd.Timestamp("1999-08-21T23:59:47")
 
     # Maximum duration to use ephemeris in seconds
     MAX_DURATION_TO_EPH = 3600.0
@@ -272,7 +272,7 @@ class BdsConstants:
     }
 
     # Beidou start time in UTC
-    START_TIME_IN_UTC = datetime(2006, 1, 1, 0, 0, 0)
+    START_TIME_IN_UTC = pd.Timestamp("2006-01-01T00:00:00")
 
     # Maximum duration to use ephemeris in seconds
     MAX_DURATION_TO_EPH = 3600.0

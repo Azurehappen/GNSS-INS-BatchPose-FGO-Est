@@ -1,7 +1,7 @@
 """Simple RINEX navigation file parser."""
 
-from datetime import datetime, timezone
 import re
+import pandas as pd
 
 from utilities.gnss_data_structures import (
     Constellation,
@@ -34,21 +34,22 @@ def _parse_float_fields(line: str, count: int = 4):
     return values
 
 
+def _parse_timestamp(line: str) -> pd.Timestamp:
+    """Parse timestamp from a RINEX navigation header line."""
+    parts = line[4:23].split()
+    year, month, day, hour, minute = map(int, parts[:5])
+    second = float(parts[5])
+    base = pd.Timestamp(year=year, month=month, day=day, hour=hour, minute=minute)
+    return base + pd.Timedelta(seconds=second)
+
+
 def _parse_gps_block(lines):
     eph = GpsEphemeris()
     first = lines[0]
     eph.prn = int(first[1:3])
 
-    year = int(first[4:8])
-    month = int(first[9:11])
-    day = int(first[12:14])
-    hour = int(first[15:17])
-    minute = int(first[18:20])
-    second = int(first[21:23])  # TODO: Use seconds and nanoseconds with pd.Timestamp
-    eph.toc = GpsTime.fromDatetime(
-        datetime(year, month, day, hour, minute, second),
-        Constellation.GPS,
-    )
+    ts = _parse_timestamp(first)
+    eph.toc = GpsTime.fromDatetime(ts, Constellation.GPS)
     eph.sv_clock_bias = float(first[23:42])
     eph.sv_clock_drift = float(first[42:61])
     eph.sv_clock_drift_rate = float(first[61:80])
@@ -89,16 +90,8 @@ def _parse_glo_block(lines):
     first = lines[0]
     eph.prn = int(first[1:3])
 
-    year = int(first[4:8])
-    month = int(first[9:11])
-    day = int(first[12:14])
-    hour = int(first[15:17])
-    minute = int(first[18:20])
-    second = int(first[21:23])  # TODO: Use seconds and nanoseconds with pd.Timestamp
-    eph.toc = GpsTime.fromDatetime(
-        datetime(year, month, day, hour, minute, second),
-        Constellation.GLO,
-    )
+    ts = _parse_timestamp(first)
+    eph.toc = GpsTime.fromDatetime(ts, Constellation.GLO)
     eph.sv_clock_bias = float(first[23:42])
     eph.sv_relative_freq_bias = float(first[42:61])
     eph.message_frame_time = float(first[61:80])
@@ -121,16 +114,8 @@ def _parse_gal_block(lines):
     first = lines[0]
     eph.prn = int(first[1:3])
 
-    year = int(first[4:8])
-    month = int(first[9:11])
-    day = int(first[12:14])
-    hour = int(first[15:17])
-    minute = int(first[18:20])
-    second = int(first[21:23])  # TODO: Use seconds and nanoseconds with pd.Timestamp
-    eph.toc = GpsTime.fromDatetime(
-        datetime(year, month, day, hour, minute, second),
-        Constellation.GAL,
-    )
+    ts = _parse_timestamp(first)
+    eph.toc = GpsTime.fromDatetime(ts, Constellation.GAL)
     eph.sv_clock_bias = float(first[23:42])
     eph.sv_clock_drift = float(first[42:61])
     eph.sv_clock_drift_rate = float(first[61:80])
@@ -180,16 +165,8 @@ def _parse_bds_block(lines):
     first = lines[0]
     eph.prn = int(first[1:3])
 
-    year = int(first[4:8])
-    month = int(first[9:11])
-    day = int(first[12:14])
-    hour = int(first[15:17])
-    minute = int(first[18:20])
-    second = int(first[21:23])  # TODO: Use seconds and nanoseconds with pd.Timestamp
-    eph.toc = GpsTime.fromDatetime(
-        datetime(year, month, day, hour, minute, second),
-        Constellation.BDS,
-    )
+    ts = _parse_timestamp(first)
+    eph.toc = GpsTime.fromDatetime(ts, Constellation.BDS)
     eph.sv_clock_bias = float(first[23:42])
     eph.sv_clock_drift = float(first[42:61])
     eph.sv_clock_drift_rate = float(first[61:80])
