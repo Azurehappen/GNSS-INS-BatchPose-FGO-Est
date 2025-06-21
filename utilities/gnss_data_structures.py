@@ -83,6 +83,17 @@ class GnssSignalChannel:
         self.doppler_mps = doppler_mps
         self.cn0_dbhz = cn0_dbhz
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, GnssSignalChannel)
+            and self.time == other.time
+            and self.signal_type == other.signal_type
+            and self.prn == other.prn
+        )
+
+    def __hash__(self):
+        return hash((self.time, self.signal_type, self.prn))
+
     def computeSatelliteInformation(
         self,
         ephemeris: Any,
@@ -114,6 +125,9 @@ class GnssMeasurementChannel(GnssSignalChannel):
         self.sigma_doppler_mps = (
             None  # Standard deviation of Doppler measurement in m/s
         )
+
+    def __hash__(self):
+        return hash((self.time, self.signal_type, self.prn))
 
 
 class EphemerisData:
