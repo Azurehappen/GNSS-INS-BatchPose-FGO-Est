@@ -8,7 +8,7 @@ from textwrap import dedent
 # Add the project root directory to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from utilities.rinex_parser import parse_rinex_nav
+from utilities.rinex_nav_parser import parse_rinex_nav
 from utilities.gnss_data_structures import Constellation, EphemerisData, GpsEphemeris
 from utilities.time_utils import GpsTime
 from datetime import datetime

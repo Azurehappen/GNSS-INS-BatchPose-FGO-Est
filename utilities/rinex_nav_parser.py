@@ -1,4 +1,4 @@
-"""Simple RINEX navigation file parser."""
+"""RINEX Navigation (Ephemeris) file parser."""
 
 import re
 import pandas as pd
