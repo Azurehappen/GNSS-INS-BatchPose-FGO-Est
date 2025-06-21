@@ -41,7 +41,7 @@ class SignalType:
         return hash((self.constellation, self.obs_code, self.channel_id))
 
 
-class GnssMeasurementChannel:
+class GnssSignalChannel:
     """
     Class to hold observation data
     """
@@ -55,6 +55,14 @@ class GnssMeasurementChannel:
         self.phase_m = None  # Phase measurement value
         self.doppler_mps = None  # Doppler frequency shift in meters per second
         self.cn0_dbhz = None  # Signal Strength (C/N0) in dB-Hz
+
+        self.sat_pos_ecef_m = None  # Satellite position in ECEF coordinates (x, y, z)
+        self.sat_vel_ecef_m = (
+            None  # Satellite velocity in ECEF coordinates (vx, vy, vz)
+        )
+        self.sat_clock_bias_m = None  # Satellite clock bias in meters
+        self.sat_group_delay_m = None  # Satellite group delay in meters
+        self.sat_clock_drift_mps = None  # Satellite clock drift in meters per second
 
     def addMeasurementFromObs(
         self,
@@ -75,8 +83,16 @@ class GnssMeasurementChannel:
         self.doppler_mps = doppler_mps
         self.cn0_dbhz = cn0_dbhz
 
+    def computeSatelliteInformation(
+        self,
+        ephemeris: Any,
+    ) -> None:
+        """Compute and store satellite information."""
 
-class GnssSignalChannel(GnssMeasurementChannel):
+        # TODO: Implement satellite position and velocity computation
+
+
+class GnssMeasurementChannel(GnssSignalChannel):
     """
     Class to hold observation data and satellite information for a single epoch.
 
@@ -84,13 +100,7 @@ class GnssSignalChannel(GnssMeasurementChannel):
 
     def __init__(self):
         super().__init__()
-        self.sat_pos_ecef_m = None  # Satellite position in ECEF coordinates (x, y, z)
-        self.sat_vel_ecef_m = (
-            None  # Satellite velocity in ECEF coordinates (vx, vy, vz)
-        )
-        self.sat_clock_bias_m = None  # Satellite clock bias in meters
-        self.sat_group_delay_m = None  # Satellite group delay in meters
-        self.sat_clock_drift_mps = None  # Satellite clock drift in meters per second
+
         self.elevation_deg = None  # Satellite elevation angle in degrees
         self.azimuth_deg = None  # Satellite azimuth angle in degrees
 
@@ -104,14 +114,6 @@ class GnssSignalChannel(GnssMeasurementChannel):
         self.sigma_doppler_mps = (
             None  # Standard deviation of Doppler measurement in m/s
         )
-
-    def computeSatelliteInformation(
-        self,
-        ephemeris: Any,
-    ) -> None:
-        """Compute and store satellite information."""
-
-        # TODO: Implement satellite position and velocity computation
 
 
 class EphemerisData:
