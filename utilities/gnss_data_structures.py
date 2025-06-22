@@ -17,28 +17,30 @@ class Constellation(Enum):
     BDS = 4
 
 
-class SignalType:
-    # Base class for signal types
-    def __init__(self, constellation: Constellation, obs_code: int):
-        self.constellation = constellation
-        # RINEX observation code
-        self.obs_code = obs_code
-        # Unique identifier for the signal channel, See RINEX 3.03 Table 5 Channel.
-        self.channel_id = ""
+from dataclasses import dataclass
 
-    def __repr__(self):
+
+@dataclass(frozen=True)
+class SignalType:
+    """Represents a GNSS signal type."""
+
+    constellation: Constellation
+    obs_code: int
+    channel_id: str = ""
+
+    def __repr__(self) -> str:
         return f"{self.constellation.name} Signal Code {self.obs_code}{self.channel_id}"
 
-    def __eq__(self, other):
-        return (
-            isinstance(other, SignalType)
-            and self.constellation == other.constellation
-            and self.obs_code == other.obs_code
-            and self.channel_id == other.channel_id
-        )
 
-    def __hash__(self):
-        return hash((self.constellation, self.obs_code, self.channel_id))
+@dataclass(frozen=True)
+class SignalChannelId:
+    """Identifies a measurement channel by PRN and signal type."""
+
+    prn: int
+    signal_type: SignalType
+
+    def __repr__(self) -> str:
+        return f"{self.signal_type} PRN {self.prn}"
 
 
 class GnssSignalChannel:
@@ -48,8 +50,8 @@ class GnssSignalChannel:
 
     def __init__(self):
         self.time = None  # GpsTime object
-        self.signal_type = None  # SignalType object
-        self.prn = None  # Satellite PRN number
+        self.signal_id: SignalChannelId = None  # SignalChannelId object
+        self.svid: str = None  # Satellite SVID (Constellation+PRN)
 
         self.code_m = None  # Code measurement value
         self.phase_m = None  # Phase measurement value
@@ -67,8 +69,8 @@ class GnssSignalChannel:
     def addMeasurementFromObs(
         self,
         time: "GpsTime",
-        signal_type: SignalType,
-        prn: int,
+        signal_id: SignalChannelId,
+        svid: str,
         code_m: float,
         phase_m: float,
         doppler_mps: float,
@@ -76,12 +78,22 @@ class GnssSignalChannel:
     ) -> None:
         """Add a measurement from an observation."""
         self.time = time
-        self.signal_type = signal_type
-        self.prn = prn
+        self.signal_id = signal_id
+        self.svid = svid
         self.code_m = code_m
         self.phase_m = phase_m
         self.doppler_mps = doppler_mps
         self.cn0_dbhz = cn0_dbhz
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, GnssSignalChannel)
+            and self.time == other.time
+            and self.signal_id == other.signal_id
+        )
+
+    def __hash__(self):
+        return hash((self.time, self.signal_id))
 
     def computeSatelliteInformation(
         self,
@@ -101,6 +113,7 @@ class GnssMeasurementChannel(GnssSignalChannel):
     def __init__(self):
         super().__init__()
 
+        self.wavelength_m = None  # Wavelength in meters
         self.elevation_deg = None  # Satellite elevation angle in degrees
         self.azimuth_deg = None  # Satellite azimuth angle in degrees
 
@@ -114,6 +127,9 @@ class GnssMeasurementChannel(GnssSignalChannel):
         self.sigma_doppler_mps = (
             None  # Standard deviation of Doppler measurement in m/s
         )
+
+    def __hash__(self):
+        return hash((self.time, self.signal_id))
 
 
 class EphemerisData:

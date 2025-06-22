@@ -63,7 +63,7 @@ class GpsConstants:
     ObsCodeToFreq = {1: L1_FREQ_HZ, 2: L2_FREQ_HZ, 5: L5_FREQ_HZ}
 
     # Mapping of observation code number to wavelength
-    ObsCodeToWavelength = {
+    ObsCodeToWavelengthM = {
         1: L1_WAVELENGTH_M,
         2: L2_WAVELENGTH_M,
         5: L5_WAVELENGTH_M,
@@ -171,7 +171,7 @@ class GloConstants:
             f"Invalid GLONASS observation code: {obs_code}. Valid codes are 1, 2, 3, 4, or 6."
         )
 
-    def getObsCodeToWavelength(self, obs_code: int, channel_num: int) -> float:
+    def getObsCodeToWavelengthM(self, obs_code: int, channel_num: int) -> float:
         freq_hz = self.getObsCodeToFreq(obs_code, channel_num)
         return SPEED_OF_LIGHT_MS / freq_hz
 
@@ -218,7 +218,7 @@ class GalConstants:
         6: E6_FREQ_HZ,
     }
 
-    ObsCodeToWavelength = {
+    ObsCodeToWavelengthM = {
         1: E1_WAVELENGTH_M,
         5: E5A_WAVELENGTH_M,
         7: E5B_WAVELENGTH_M,
@@ -290,7 +290,7 @@ class BdsConstants:
         8: B2_FREQ_HZ,
         6: B3_FREQ_HZ,
     }
-    ObsCodeToWavelength = {
+    ObsCodeToWavelengthM = {
         1: B1_WAVELENGTH_M,
         2: B12_WAVELENGTH_M,
         5: B2A_WAVELENGTH_M,
