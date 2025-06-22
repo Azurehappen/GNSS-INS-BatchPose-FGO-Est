@@ -11,7 +11,7 @@ if __name__ == "__main__":
     rover_file = "data/tex_cup/asterx4_rover.obs"
     base_file = "data/tex_cup/asterx4_base_1hz.obs"
 
-    rover_obs = parse_rinex_obs(rover_file, measurement_channel=True)
+    rover_obs = parse_rinex_obs(rover_file)
     base_obs = parse_rinex_obs(base_file, interval=30)
 
     # Example usage: query GPS PRN 1 ephemeris at first epoch
@@ -20,6 +20,4 @@ if __name__ == "__main__":
     print("Example ephemeris for GPS PRN 1 at", query_time, ":")
     print(eph.__dict__)
 
-    print(
-        f"Loaded {len(rover_obs)} rover epochs and {len(base_obs)} base epochs"
-    )
+    print(f"Loaded {len(rover_obs)} rover epochs and {len(base_obs)} base epochs")

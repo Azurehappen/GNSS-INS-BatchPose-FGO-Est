@@ -1,22 +1,16 @@
-"""RINEX Observation file parser.
+"""RINEX 3.04 Observation file parser.
 
-The parser only extracts basic observation measurements (code, carrier phase,
-Doppler and C/N0).  It supports a small subset of the RINEX 3 observation
-format which is sufficient for the example data bundled with this repository.
+The parser only basic observation measurements (code, carrier phase,
+Doppler and C/N0).
 
 Two helper functions are exposed:
-
-``parse_rinex_obs``
-    Generic parser that returns observation channels either as
-    :class:`~utilities.gnss_data_structures.GnssSignalChannel` or
-    :class:`~utilities.gnss_data_structures.GnssMeasurementChannel` instances.
 
 ``parse_rinex_obs`` takes an ``interval`` argument which can be used to down
 sample the file.  For example the base station RINEX file is provided at 1 Hz
 but only every 30 seconds are used in the example workflow.
 
 The implementation here is intentionally lightweight but aims to follow the
-RINEX 3.04 specification closely enough for our test data.
+RINEX 3.04 specifications.
 """
 
 from __future__ import annotations
@@ -30,21 +24,18 @@ import constants.gnss_constants as gnssConst
 from utilities.gnss_data_structures import (
     Constellation,
     GnssMeasurementChannel,
-    GnssSignalChannel,
     SignalType,
 )
-from utilities.parameters import GnssParameters, RinexParameters
+from utilities.parameters import GnssParameters, RINEX_OBS_CHANNEL_TO_USE
 from utilities.time_utils import GpsTime
 
 
-_CONST_MAP = {
+_SYS_CHAR_TO_CONSTEL_MAP = {
     "G": Constellation.GPS,
     "R": Constellation.GLO,
     "E": Constellation.GAL,
     "C": Constellation.BDS,
 }
-
-_CHAR_MAP = {v: k for k, v in _CONST_MAP.items()}
 
 
 def _parse_header(f) -> Dict[Constellation, List[str]]:
@@ -62,7 +53,7 @@ def _parse_header(f) -> Dict[Constellation, List[str]]:
         strings (e.g. ``"C1C"``, ``"L1C"``).
     """
 
-    obs_types: Dict[Constellation, List[str]] = {}
+    sys_char_to_obs_type: Dict[str, List[str]] = {}
 
     for line in f:
         if "SYS / # / OBS TYPES" in line:
@@ -72,13 +63,11 @@ def _parse_header(f) -> Dict[Constellation, List[str]]:
             while len(types) < num_types:
                 nxt = next(f)
                 types.extend(nxt[7:60].split())
-            const = _CONST_MAP.get(sys_char)
-            if const:
-                obs_types[const] = types[:num_types]
+            sys_char_to_obs_type[sys_char] = types[:num_types]
         elif "END OF HEADER" in line:
             break
 
-    return obs_types
+    return sys_char_to_obs_type
 
 
 def _get_wavelength(constellation: Constellation, prn: int, obs_code: int) -> float:
@@ -114,10 +103,7 @@ def parse_rinex_obs(
     file_path: str,
     *,
     interval: int = 1,
-    measurement_channel: bool = False,
-    parameters: GnssParameters | None = None,
-    rinex_params: RinexParameters | None = None,
-) -> Dict[GpsTime, set[GnssSignalChannel]]:
+) -> Dict[GpsTime, set[GnssMeasurementChannel]]:
     """Parse a RINEX observation file.
 
     Parameters
@@ -128,15 +114,6 @@ def parse_rinex_obs(
         Only epochs with timestamps that are multiples of ``interval`` seconds
         (relative to the first epoch) are returned.  Default is ``1`` which
         keeps all epochs.
-    measurement_channel : bool, optional
-        When ``True`` the returned channels are instances of
-        :class:`GnssMeasurementChannel` instead of :class:`GnssSignalChannel`.
-    parameters : GnssParameters | None
-        Parameters controlling the CN0 threshold.  If ``None`` a default
-        ``GnssParameters`` instance is used.
-    rinex_params : RinexParameters | None
-        Parameters controlling which observation signals to keep.  When
-        ``None`` defaults from :class:`RinexParameters` are used.
 
     Returns
     -------
@@ -144,15 +121,10 @@ def parse_rinex_obs(
         Mapping from :class:`GpsTime` to a set of observation channels.
     """
 
-    params = parameters or GnssParameters()
-    rinex_p = rinex_params or RinexParameters()
-    channel_cls: Type[GnssSignalChannel]
-    channel_cls = GnssMeasurementChannel if measurement_channel else GnssSignalChannel
-
-    result: Dict[GpsTime, set[GnssSignalChannel]] = defaultdict(set)
+    result: Dict[GpsTime, set[GnssMeasurementChannel]] = defaultdict(set)
 
     with open(file_path, "r") as f:
-        obs_type_map = _parse_header(f)
+        sys_char_to_obs_type = _parse_header(f)
 
         first_epoch: GpsTime | None = None
         prev_epoch: GpsTime | None = None
@@ -170,9 +142,12 @@ def parse_rinex_obs(
                 first_epoch = epoch_time
                 prev_epoch = epoch_time
             else:
-                if interval > 1 and prev_epoch is not None and (
-                    epoch_time.gps_timestamp - prev_epoch.gps_timestamp
-                ) < interval - 1e-6:
+                if (
+                    interval > 1
+                    and prev_epoch is not None
+                    and (epoch_time.gps_timestamp - prev_epoch.gps_timestamp)
+                    < interval - 1e-6
+                ):
                     for _ in range(num_sats):
                         f.readline()
                     continue
@@ -182,12 +157,14 @@ def parse_rinex_obs(
                 sat_line = f.readline()
                 if not sat_line:
                     break
-                prn_id = sat_line[:3]
-                const = _CONST_MAP.get(prn_id[0])
-                if const is None or const not in obs_type_map:
+                sys_char = sat_line[0]
+                if (
+                    sys_char not in RINEX_OBS_CHANNEL_TO_USE
+                    or sys_char not in _SYS_CHAR_TO_CONSTEL_MAP
+                ):
                     continue
-
-                obs_list = obs_type_map[const]
+                prn_id = sat_line[:3]
+                obs_list = sys_char_to_obs_type[sys_char]
                 needed_len = len(obs_list) * 16
                 data_str = sat_line[3:].rstrip("\n")
                 while len(data_str) < needed_len:
@@ -207,7 +184,7 @@ def parse_rinex_obs(
                     meas_map.setdefault(key, {})[t[0]] = val
 
                 prn = int(prn_id[1:])
-                allowed = rinex_p.obs_channel_to_use.get(_CHAR_MAP[const], set())
+                allowed = RINEX_OBS_CHANNEL_TO_USE.get(sys_char, set())
                 for (obs_code, chan_id), meas in meas_map.items():
                     if f"{obs_code}{chan_id}" not in allowed:
                         continue
@@ -215,7 +192,7 @@ def parse_rinex_obs(
                         continue
 
                     cn0 = meas["S"]
-                    if cn0 is None or cn0 < params.cn0_threshold:
+                    if cn0 is None or cn0 < GnssParameters.CNO_THRESHOLD:
                         continue
 
                     code = meas["C"]
@@ -224,14 +201,16 @@ def parse_rinex_obs(
                     if code is None or phase_cycles is None or doppler_hz is None:
                         continue
 
-                    wavelength = _get_wavelength(const, prn, obs_code)
+                    wavelength = _get_wavelength(
+                        _SYS_CHAR_TO_CONSTEL_MAP[sys_char], prn, obs_code
+                    )
                     phase_m = phase_cycles * wavelength
                     doppler_mps = -doppler_hz * wavelength
 
-                    signal = SignalType(const, obs_code)
+                    signal = SignalType(_SYS_CHAR_TO_CONSTEL_MAP[sys_char], obs_code)
                     signal.channel_id = chan_id
 
-                    channel = channel_cls()
+                    channel = GnssMeasurementChannel()
                     channel.addMeasurementFromObs(
                         epoch_time, signal, prn, code, phase_m, doppler_mps, cn0
                     )
@@ -239,4 +218,3 @@ def parse_rinex_obs(
                     result[epoch_time].add(channel)
 
     return result
-
