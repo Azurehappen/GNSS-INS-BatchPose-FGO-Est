@@ -33,7 +33,7 @@ from utilities.gnss_data_structures import (
     GnssSignalChannel,
     SignalType,
 )
-from utilities.parameters import GnssParameters
+from utilities.parameters import GnssParameters, RinexParameters
 from utilities.time_utils import GpsTime
 
 
@@ -43,6 +43,8 @@ _CONST_MAP = {
     "E": Constellation.GAL,
     "C": Constellation.BDS,
 }
+
+_CHAR_MAP = {v: k for k, v in _CONST_MAP.items()}
 
 
 def _parse_header(f) -> Dict[Constellation, List[str]]:
@@ -114,6 +116,7 @@ def parse_rinex_obs(
     interval: int = 1,
     measurement_channel: bool = False,
     parameters: GnssParameters | None = None,
+    rinex_params: RinexParameters | None = None,
 ) -> Dict[GpsTime, set[GnssSignalChannel]]:
     """Parse a RINEX observation file.
 
@@ -131,6 +134,9 @@ def parse_rinex_obs(
     parameters : GnssParameters | None
         Parameters controlling the CN0 threshold.  If ``None`` a default
         ``GnssParameters`` instance is used.
+    rinex_params : RinexParameters | None
+        Parameters controlling which observation signals to keep.  When
+        ``None`` defaults from :class:`RinexParameters` are used.
 
     Returns
     -------
@@ -139,6 +145,7 @@ def parse_rinex_obs(
     """
 
     params = parameters or GnssParameters()
+    rinex_p = rinex_params or RinexParameters()
     channel_cls: Type[GnssSignalChannel]
     channel_cls = GnssMeasurementChannel if measurement_channel else GnssSignalChannel
 
@@ -148,6 +155,7 @@ def parse_rinex_obs(
         obs_type_map = _parse_header(f)
 
         first_epoch: GpsTime | None = None
+        prev_epoch: GpsTime | None = None
 
         while True:
             line = f.readline()
@@ -160,13 +168,15 @@ def parse_rinex_obs(
 
             if first_epoch is None:
                 first_epoch = epoch_time
-
-            if int(epoch_time.gps_timestamp - first_epoch.gps_timestamp) % interval != 0:
-                # Skip this epoch to achieve the desired interval
-                # Still need to consume the following observation lines
-                for _ in range(num_sats):
-                    f.readline()
-                continue
+                prev_epoch = epoch_time
+            else:
+                if interval > 1 and prev_epoch is not None and (
+                    epoch_time.gps_timestamp - prev_epoch.gps_timestamp
+                ) < interval - 1e-6:
+                    for _ in range(num_sats):
+                        f.readline()
+                    continue
+                prev_epoch = epoch_time
 
             for _ in range(num_sats):
                 sat_line = f.readline()
@@ -197,7 +207,10 @@ def parse_rinex_obs(
                     meas_map.setdefault(key, {})[t[0]] = val
 
                 prn = int(prn_id[1:])
+                allowed = rinex_p.obs_channel_to_use.get(_CHAR_MAP[const], set())
                 for (obs_code, chan_id), meas in meas_map.items():
+                    if f"{obs_code}{chan_id}" not in allowed:
+                        continue
                     if not {"C", "L", "D", "S"}.issubset(meas):
                         continue
 
