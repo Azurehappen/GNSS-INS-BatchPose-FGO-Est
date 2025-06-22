@@ -56,13 +56,18 @@ class TestRinexObsParser(unittest.TestCase):
             Constellation,
         )
 
-        ch_id = SignalChannelId(18, SignalType(Constellation.GPS, 1, "C"))
-        G18_1C_CHANNEL = channels[ch_id]
+        ch_id_g = SignalChannelId(18, SignalType(Constellation.GPS, 1, "C"))
+        G18_1C_CHANNEL = channels[ch_id_g]
         self.assertEqual(G18_1C_CHANNEL.signal_id.prn, 18)
         self.assertEqual(G18_1C_CHANNEL.signal_id.signal_type.obs_code, 1)
         self.assertEqual(G18_1C_CHANNEL.signal_id.signal_type.channel_id, "C")
         self.assertAlmostEqual(G18_1C_CHANNEL.code_m, 22200304.783)
         self.assertAlmostEqual(G18_1C_CHANNEL.cn0_dbhz, 43.563)
+
+        ch_id_c23 = SignalChannelId(23, SignalType(Constellation.BDS, 2, "I"))
+        ch_id_c27 = SignalChannelId(27, SignalType(Constellation.BDS, 2, "I"))
+        self.assertIn(ch_id_c23, channels)
+        self.assertIn(ch_id_c27, channels)
 
     def test_edge_cases(self):
         tmp = self._create_sample()
