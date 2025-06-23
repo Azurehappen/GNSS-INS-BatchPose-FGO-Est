@@ -9,15 +9,14 @@ import constants.gnss_constants as gnssConst
 if TYPE_CHECKING:
     from utilities.time_utils import GpsTime
 
+from dataclasses import dataclass
+
 
 class Constellation(Enum):
     GPS = 1
     GLO = 2
     GAL = 3
     BDS = 4
-
-
-from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -190,6 +189,17 @@ class EphemerisData:
             )
         else:
             raise ValueError(f"Unsupported constellation {constellation}")
+
+    def _resetIndexLookup(self) -> None:
+        """Reset the index lookup for the given constellation."""
+        for key in self.gps_eph_index_lookup:
+            self.gps_eph_index_lookup[key] = 0
+        for key in self.glo_eph_index_lookup:
+            self.glo_eph_index_lookup[key] = 0
+        for key in self.gal_eph_index_lookup:
+            self.gal_eph_index_lookup[key] = 0
+        for key in self.bds_eph_index_lookup:
+            self.bds_eph_index_lookup[key] = 0
 
     def addEphemeris(
         self, constellation: Constellation, prn: int, time: "GpsTime", eph: Any

@@ -31,11 +31,11 @@ from utilities.parameters import GnssParameters, RINEX_OBS_CHANNEL_TO_USE
 from utilities.time_utils import GpsTime
 
 
-_SYS_CHAR_TO_CONSTEL_MAP = {
-    "G": Constellation.GPS,
-    "R": Constellation.GLO,
-    "E": Constellation.GAL,
-    "C": Constellation.BDS,
+_SYS_CHAR_TO_CONSTEL_MAP: Dict[str, Tuple[Constellation, bool]] = {
+    "G": (Constellation.GPS, GnssParameters.enable_gps),
+    "R": (Constellation.GLO, GnssParameters.enable_glonass),
+    "E": (Constellation.GAL, GnssParameters.enable_galileo),
+    "C": (Constellation.BDS, GnssParameters.enable_beidou),
 }
 
 
@@ -170,6 +170,8 @@ def parse_rinex_obs(
                 if (
                     sys_char not in RINEX_OBS_CHANNEL_TO_USE
                     or sys_char not in _SYS_CHAR_TO_CONSTEL_MAP
+                    # Check if constellation is enabled
+                    or not _SYS_CHAR_TO_CONSTEL_MAP[sys_char][1]
                 ):
                     continue
                 prn_id = sat_line[:3]
