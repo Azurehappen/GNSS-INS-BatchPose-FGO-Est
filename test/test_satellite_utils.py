@@ -57,10 +57,10 @@ class TestSatelliteUtils(unittest.TestCase):
         ch.computeSatelliteInformation(eph)
 
         self.assertIsNotNone(ch.sat_pos_ecef_m)
-        # code measurement should be corrected by group delay only
-        expected = 2e7 - (ch.sat_clock_bias_m + ch.sat_group_delay_m)
+        # code measurement should be corrected by clock_bias (which includes group delay)
+        expected = 2e7 + ch.sat_clock_bias_m
         self.assertAlmostEqual(ch.code_m, expected, places=2)
-        self.assertAlmostEqual(ch.phase_m, 1000.0 - ch.sat_clock_bias_m, places=2)
+        self.assertAlmostEqual(ch.phase_m, 1000.0 + ch.sat_clock_bias_m, places=2)
 
 
 if __name__ == "__main__":

@@ -204,6 +204,7 @@ class GnssSignalChannel:
         except:
             raise ValueError("Failed to compute satellite information")
 
+        self.sat_group_delay_m = group_delay_s * gnssConst.SPEED_OF_LIGHT_MS
         # Clock bias has been adjusted by group delay
         self.code_m += self.sat_clock_bias_m
         self.phase_m += self.sat_clock_bias_m
