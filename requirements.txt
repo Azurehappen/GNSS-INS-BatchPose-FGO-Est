@@ -19,3 +19,4 @@ setuptools==78.1.1
 six==1.17.0
 tzdata==2025.2
 wheel==0.45.1
+pymap3d==3.2.0

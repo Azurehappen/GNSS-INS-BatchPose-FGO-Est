@@ -260,4 +260,5 @@ def parse_rinex_obs(
 
                     result[epoch_time][signal_id] = channel
 
+    print(f"Parsed {len(result)} epochs observations from {file_path}")
     return result

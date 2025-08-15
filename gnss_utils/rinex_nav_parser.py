@@ -268,4 +268,8 @@ def parse_rinex_nav(file_path: str) -> EphemerisData:
                 # Unsupported constellation
                 pass
 
+    print(f"Loaded {len(eph_data.gps_ephemerides)} GPS ephemerides, "
+          f"{len(eph_data.glo_ephemerides)} GLONASS ephemerides, "
+          f"{len(eph_data.gal_ephemerides)} Galileo ephemerides, "
+          f"{len(eph_data.bds_ephemerides)} BeiDou ephemerides")
     return eph_data
