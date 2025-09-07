@@ -13,6 +13,7 @@ from gnss_utils.gnss_data_utils import (
     GnssMeasurementChannel,
     SignalChannelId,
     SignalType,
+    SatelliteId,
 )
 from gnss_utils.time_utils import GpsTime
 from gnss_utils.gnss_data_utils import apply_ephemerides_to_obs
@@ -21,7 +22,10 @@ from gnss_utils.gnss_data_utils import apply_ephemerides_to_obs
 class TestSatelliteUtils(unittest.TestCase):
     def test_channel_removed_when_no_eph(self):
         epoch = GpsTime.fromWeekAndTow(0, 0)
-        ch_id = SignalChannelId(1, SignalType(Constellation.GPS, 1, "C"))
+        ch_id = SignalChannelId(
+            SatelliteId(Constellation.GPS, 1),
+            SignalType(Constellation.GPS, 1, "C"),
+        )
         ch = GnssMeasurementChannel()
         ch.addMeasurementFromObs(
             time=epoch,
@@ -58,7 +62,10 @@ class TestSatelliteUtils(unittest.TestCase):
         eph.tgd = 1e-8
 
         epoch = GpsTime.fromWeekAndTow(0, 60)
-        ch_id = SignalChannelId(1, SignalType(Constellation.GPS, 1, "C"))
+        ch_id = SignalChannelId(
+            SatelliteId(Constellation.GPS, 1),
+            SignalType(Constellation.GPS, 1, "C"),
+        )
         ch = GnssMeasurementChannel()
         ch.addMeasurementFromObs(
             time=epoch,

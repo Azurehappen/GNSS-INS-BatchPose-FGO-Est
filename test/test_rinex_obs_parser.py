@@ -7,7 +7,12 @@ import unittest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from gnss_utils.rinex_obs_parser import parse_rinex_obs
-from gnss_utils.gnss_data_utils import SignalType, SignalChannelId, Constellation
+from gnss_utils.gnss_data_utils import (
+    SignalType,
+    SignalChannelId,
+    Constellation,
+    SatelliteId,
+)
 
 RINEX_OBS_CHANNEL_TO_USE_FOR_TEST: dict[str, set[str]] = {
     "G": {"1C", "2L"},
@@ -63,18 +68,26 @@ class TestRinexObsParser(unittest.TestCase):
             SignalChannelId,
             SignalType,
             Constellation,
+            SatelliteId,
         )
 
-        ch_id_g = SignalChannelId(18, SignalType(Constellation.GPS, 1, "C"))
+        ch_id_g = SignalChannelId(
+            SatelliteId(Constellation.GPS, 18),
+            SignalType(Constellation.GPS, 1, "C"),
+        )
         G18_1C_CHANNEL = channels[ch_id_g]
-        self.assertEqual(G18_1C_CHANNEL.signal_id.prn, 18)
+        self.assertEqual(G18_1C_CHANNEL.signal_id.satellite_id.prn, 18)
         self.assertEqual(G18_1C_CHANNEL.signal_id.signal_type.obs_code, 1)
         self.assertEqual(G18_1C_CHANNEL.signal_id.signal_type.channel_id, "C")
         self.assertAlmostEqual(G18_1C_CHANNEL.code_m, 22200304.783)
         self.assertAlmostEqual(G18_1C_CHANNEL.cn0_dbhz, 43.563)
 
-        ch_id_c23 = SignalChannelId(23, SignalType(Constellation.BDS, 2, "I"))
-        ch_id_c27 = SignalChannelId(27, SignalType(Constellation.BDS, 2, "I"))
+        ch_id_c23 = SignalChannelId(
+            SatelliteId(Constellation.BDS, 23), SignalType(Constellation.BDS, 2, "I")
+        )
+        ch_id_c27 = SignalChannelId(
+            SatelliteId(Constellation.BDS, 27), SignalType(Constellation.BDS, 2, "I")
+        )
         self.assertIn(ch_id_c23, channels)
         self.assertIn(ch_id_c27, channels)
 
@@ -93,28 +106,36 @@ class TestRinexObsParser(unittest.TestCase):
 
         # PRN 3 has missing phase for 5Q so it should not appear
         sig = SignalType(Constellation.GAL, 5, "Q")
-        gal5q_missing = SignalChannelId(3, sig)
+        gal5q_missing = SignalChannelId(SatelliteId(Constellation.GAL, 3), sig)
         self.assertNotIn(gal5q_missing, channels)
 
         # PRN 9 has complete 5Q measurements
-        gal5q = SignalChannelId(9, sig)
+        gal5q = SignalChannelId(SatelliteId(Constellation.GAL, 9), sig)
         self.assertIn(gal5q, channels)
 
         sig = SignalType(Constellation.GLO, 2, "C")
-        glo_2c = SignalChannelId(23, sig)
+        glo_2c = SignalChannelId(SatelliteId(Constellation.GLO, 23), sig)
         self.assertIn(glo_2c, channels)
         self.assertAlmostEqual(channels[glo_2c].code_m, 19397871.832)
 
-        r17_1c = SignalChannelId(17, SignalType(Constellation.GLO, 1, "C"))
+        r17_1c = SignalChannelId(
+            SatelliteId(Constellation.GLO, 17), SignalType(Constellation.GLO, 1, "C")
+        )
         self.assertIn(r17_1c, channels)
-        r17_2c = SignalChannelId(17, SignalType(Constellation.GLO, 2, "C"))
+        r17_2c = SignalChannelId(
+            SatelliteId(Constellation.GLO, 17), SignalType(Constellation.GLO, 2, "C")
+        )
         self.assertNotIn(r17_2c, channels)
 
-        g17_2l = SignalChannelId(17, SignalType(Constellation.GPS, 2, "L"))
+        g17_2l = SignalChannelId(
+            SatelliteId(Constellation.GPS, 17), SignalType(Constellation.GPS, 2, "L")
+        )
         self.assertIn(g17_2l, channels)
         self.assertAlmostEqual(channels[g17_2l].code_m, 22119480.056)
 
-        g18_2l = SignalChannelId(18, SignalType(Constellation.GPS, 2, "L"))
+        g18_2l = SignalChannelId(
+            SatelliteId(Constellation.GPS, 18), SignalType(Constellation.GPS, 2, "L")
+        )
         self.assertNotIn(g18_2l, channels)
 
 

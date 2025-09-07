@@ -1,6 +1,7 @@
 from gnss_utils.rinex_nav_parser import parse_rinex_nav
 from gnss_utils.rinex_obs_parser import parse_rinex_obs
 from gnss_utils.gnss_data_utils import apply_ephemerides_to_obs, apply_base_corrections
+from gnss_utils.cycle_slip_detection import detect_cycle_slips
 from constants.gnss_constants import Constellation
 from imu_utils.imu_data_utils import parse_ground_truth_log, parse_imu_log
 import constants.parameters as params
@@ -26,6 +27,7 @@ if __name__ == "__main__":
     eph_data.resetIndexLookup()
     apply_ephemerides_to_obs(base_obs, eph_data)
     apply_base_corrections(rover_obs, base_obs)
+    detect_cycle_slips(rover_obs)
 
     # Example usage: query GPS PRN 1 ephemeris at first epoch
     query_time = eph_data.gps_ephemerides[1][0][0]

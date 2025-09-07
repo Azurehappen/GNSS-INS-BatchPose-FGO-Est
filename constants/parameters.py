@@ -19,6 +19,7 @@ class GnssParameters:
     CNO_THRESHOLD: float = (
         20.0  # Minimum C/N0 in dB-Hz for a satellite to be considered valid
     )
+    CYCLE_SLIP_THRESHOLD_M: float = 0.1  # Geometry-free cycle slip threshold
 
     enable_gps: bool = True
     enable_galileo: bool = True
