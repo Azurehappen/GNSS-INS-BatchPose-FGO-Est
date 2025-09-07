@@ -29,7 +29,7 @@ def apply_ephemerides_to_obs(
         to_delete = []
         for ch_id, ch in channels.items():
             eph = eph_data.getCurrentEphemeris(
-                ch_id.signal_type.constellation, ch_id.prn, epoch
+                ch_id.signal_type.constellation, ch_id.satellite_id.prn, epoch
             )
             if eph is None:
                 to_delete.append(ch_id)
@@ -100,14 +100,25 @@ class SignalType:
 
 
 @dataclass(frozen=True)
-class SignalChannelId:
-    """Identifies a measurement channel by PRN and signal type."""
+class SatelliteId:
+    """Identifies a satellite by constellation and PRN."""
 
+    constellation: Constellation
     prn: int
+
+    def __repr__(self) -> str:
+        return f"{self.constellation.name} PRN {self.prn}"
+
+
+@dataclass(frozen=True)
+class SignalChannelId:
+    """Identifies a measurement channel by satellite and signal type."""
+
+    satellite_id: SatelliteId
     signal_type: SignalType
 
     def __repr__(self) -> str:
-        return f"{self.signal_type} PRN {self.prn}"
+        return f"{self.signal_type} {self.satellite_id}"
 
 
 class GnssSignalChannel:

@@ -11,6 +11,7 @@ from gnss_utils.gnss_data_utils import (
     SignalChannelId,
     SignalType,
     Constellation,
+    SatelliteId,
 )
 from gnss_utils.time_utils import GpsTime
 from constants.parameters import BASE_POS_ECEF
@@ -20,7 +21,10 @@ from gnss_utils import satellite_utils
 class TestBaseCorrections(unittest.TestCase):
     def test_basic_correction_and_removal(self):
         base_epoch = GpsTime.fromWeekAndTow(0, 0)
-        ch_id = SignalChannelId(1, SignalType(Constellation.GPS, 1, "C"))
+        ch_id = SignalChannelId(
+            SatelliteId(Constellation.GPS, 1),
+            SignalType(Constellation.GPS, 1, "C"),
+        )
         base_ch = GnssMeasurementChannel()
         base_ch.addMeasurementFromObs(
             time=base_epoch,
@@ -47,7 +51,10 @@ class TestBaseCorrections(unittest.TestCase):
         )
         rover_obs = {rover_epoch: {ch_id: rover_ch}}
 
-        other_id = SignalChannelId(2, SignalType(Constellation.GPS, 1, "C"))
+        other_id = SignalChannelId(
+            SatelliteId(Constellation.GPS, 2),
+            SignalType(Constellation.GPS, 1, "C"),
+        )
         other_ch = GnssMeasurementChannel()
         other_ch.addMeasurementFromObs(
             time=rover_epoch,

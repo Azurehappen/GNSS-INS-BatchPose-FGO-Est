@@ -26,6 +26,7 @@ from gnss_utils.gnss_data_utils import (
     GnssMeasurementChannel,
     SignalChannelId,
     SignalType,
+    SatelliteId,
 )
 from constants.parameters import GnssParameters, RINEX_OBS_CHANNEL_TO_USE
 from gnss_utils.time_utils import GpsTime
@@ -244,7 +245,10 @@ def parse_rinex_obs(
                     signal = SignalType(
                         _SYS_CHAR_TO_CONSTEL_MAP[sys_char][0], obs_code, chan_id
                     )
-                    signal_id = SignalChannelId(prn, signal)
+                    sat_id = SatelliteId(
+                        _SYS_CHAR_TO_CONSTEL_MAP[sys_char][0], prn
+                    )
+                    signal_id = SignalChannelId(sat_id, signal)
 
                     channel = GnssMeasurementChannel()
                     channel.wavelength_m = wavelength_m
