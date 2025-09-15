@@ -95,8 +95,8 @@ INCH_TO_METER = 0.0254  # 1 inch = 0.0254 meters
 
 @dataclass(frozen=True)
 class TexCupBoschImuParams:
-    # GNSS antenna to IMU translation (meters) in IMU body frame.
-    t_ant_to_imu_in_b: np.ndarray = field(
+    # IMU to GNSS antenna translation (meters) in IMU body frame.
+    t_imu_to_ant_in_b: np.ndarray = field(
         default_factory=lambda: np.array(
             [16.1811 * INCH_TO_METER, -6.2992 * INCH_TO_METER, 4.8425 * INCH_TO_METER]
         )
@@ -121,8 +121,8 @@ class TexCupBoschImuParams:
 
 @dataclass(frozen=True)
 class TexCupLordImuParams:
-    # GNSS antenna to IMU translation (meters) in IMU body frame.
-    t_ant_to_imu_in_b: np.ndarray = field(
+    # IMU to GNSS antenna translation (meters) in IMU body frame.
+    t_imu_to_ant_in_b: np.ndarray = field(
         default_factory=lambda: np.array(
             [-0.461 * INCH_TO_METER, -0.125 * INCH_TO_METER, -0.119 * INCH_TO_METER]
         )
