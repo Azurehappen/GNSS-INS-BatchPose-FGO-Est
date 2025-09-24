@@ -70,11 +70,21 @@ def select_pivot_satellite(
 
     candidates: list[Tuple[SignalChannelId, GnssMeasurementChannel, float]] = []
     for scid, ch in channels.items():
-        if ch.sat_pos_ecef_m is None or ch.cn0_dbhz is None:
+        # Require CN0 for prioritization; skip if missing
+        if ch.cn0_dbhz is None:
             continue
-        elev_deg, _ = satellite_utils.compute_sat_elev_az(
-            ecef_to_ned_rot, recv_pos_ecef, ch.sat_pos_ecef_m
-        )
+
+        # Reuse pre-computed elevation/azimuth if available; otherwise compute and cache
+        elev_deg = ch.elevation_deg
+        if elev_deg is None:
+            if ch.sat_pos_ecef_m is None:
+                continue
+            elev_deg, az_deg = satellite_utils.compute_sat_elev_az(
+                ecef_to_ned_rot, recv_pos_ecef, ch.sat_pos_ecef_m
+            )
+            ch.elevation_deg = elev_deg
+            ch.azimuth_deg = az_deg
+
         if elev_deg >= min_elev_deg and ch.cn0_dbhz >= min_cn0_dbhz:
             candidates.append((scid, ch, elev_deg))
 
