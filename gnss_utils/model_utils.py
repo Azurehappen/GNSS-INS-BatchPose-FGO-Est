@@ -31,6 +31,25 @@ def cn0_based_noise_std(cn0: float, a: float, b: float) -> float:
     return a + b * 10 ** (-cn0 / 10)
 
 
+def elevation_based_noise_var(elev_deg: float, sigma_a: float, sigma_b: float) -> float:
+    """Compute noise variance based on elevation angle.
+    Args:
+        elev_deg: Elevation angle in degrees.
+        a: Parameter a in the noise model.
+        b: Parameter b in the noise model.
+    Returns:
+        Noise standard deviation.
+    """
+
+    # a + b / sin(elev)
+    elev_rad = np.radians(elev_deg)
+    sin_elev = np.sin(elev_rad)
+    if sin_elev < 1e-6:
+        sin_elev = 1e-6  # Prevent division by zero or very small values
+
+    return 2 * sigma_a**2 + (sigma_b / sin_elev) ** 2
+
+
 def elevation_based_noise_var(elev_deg: float, a: float, b: float) -> float:
     """Compute noise variance based on elevation angle.
 

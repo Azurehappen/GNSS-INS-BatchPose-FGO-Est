@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 import numpy as np
 import pymap3d as pm
+from gnss_utils.gnss_dataclass import SignalType
+from constants.gnss_constants import Constellation
 
 
 def compute_ecef_ned_rot_mat(lat_rad: float, lon_rad: float) -> np.ndarray:
@@ -45,9 +47,9 @@ class GnssParameters:
         20.0  # Minimum C/N0 in dB-Hz for a satellite to be considered valid
     )
     PIVOT_SAT_ELEVATION_MASK_DEG: float = (
-        40.0  # Minimum elevation angle for pivot satellite
+        45.0  # Minimum elevation angle for pivot satellite
     )
-    PIVOT_SAT_CNO_THRESHOLD: float = 35.0  # Minimum C/N0 in dB-Hz for pivot satellite
+    PIVOT_SAT_CNO_THRESHOLD: float = 30.0  # Minimum C/N0 in dB-Hz for pivot satellite
     CYCLE_SLIP_THRESHOLD_M: float = 0.1  # Geometry-free cycle slip threshold
 
     enable_gps: bool = True
@@ -55,6 +57,20 @@ class GnssParameters:
     enable_glonass: bool = True
     enable_beidou: bool = True
 
+
+phase_sigma_a = 0.003  # meters
+phase_sigma_b = 0.003  # meters
+
+# SignalType -> (fact_a, fact_b)
+GNSS_ELEV_MODEL_PARAMS: dict[SignalType, tuple[float, float]] = {
+    SignalType(Constellation.GPS, 1, "C"): (300 * phase_sigma_a, 450 * phase_sigma_b),
+    SignalType(Constellation.GPS, 2, "W"): (300 * phase_sigma_a, 450 * phase_sigma_b),
+    SignalType(Constellation.GLO, 1, "C"): (700 * phase_sigma_a, 800 * phase_sigma_b),
+    SignalType(Constellation.GLO, 2, "C"): (700 * phase_sigma_a, 800 * phase_sigma_b),
+    SignalType(Constellation.GAL, 1, "C"): (350 * phase_sigma_a, 500 * phase_sigma_b),
+    SignalType(Constellation.GAL, 7, "Q"): (350 * phase_sigma_a, 500 * phase_sigma_b),
+    SignalType(Constellation.BDS, 2, "I"): (300 * phase_sigma_a, 450 * phase_sigma_b),
+}
 
 RINEX_OBS_CHANNEL_TO_USE: dict[str, set[str]] = {
     "G": {"1C", "2W"},

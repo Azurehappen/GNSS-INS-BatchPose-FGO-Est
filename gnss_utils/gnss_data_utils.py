@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from gnss_utils.time_utils import GpsTime
 
 from dataclasses import dataclass
+from gnss_utils.gnss_dataclass import *
 
 
 def apply_ephemerides_to_obs(
@@ -85,40 +86,6 @@ def apply_base_corrections(
             rover_channels.pop(d, None)
         if not rover_channels:
             rover_obs.pop(epoch, None)
-
-
-@dataclass(frozen=True)
-class SignalType:
-    """Represents a GNSS signal type."""
-
-    constellation: Constellation
-    obs_code: int
-    channel_id: str = ""
-
-    def __repr__(self) -> str:
-        return f"{self.constellation.name} Signal Code {self.obs_code}{self.channel_id}"
-
-
-@dataclass(frozen=True)
-class SatelliteId:
-    """Identifies a satellite by constellation and PRN."""
-
-    constellation: Constellation
-    prn: int
-
-    def __repr__(self) -> str:
-        return f"{self.constellation.name} PRN {self.prn}"
-
-
-@dataclass(frozen=True)
-class SignalChannelId:
-    """Identifies a measurement channel by satellite and signal type."""
-
-    satellite_id: SatelliteId
-    signal_type: SignalType
-
-    def __repr__(self) -> str:
-        return f"{self.signal_type} {self.satellite_id}"
 
 
 class GnssSignalChannel:
