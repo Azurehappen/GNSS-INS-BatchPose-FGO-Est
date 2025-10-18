@@ -96,15 +96,12 @@ phase_sigma_b = 0.003  # meters
 
 # SignalType -> (fact_a, fact_b)
 GNSS_ELEV_MODEL_PARAMS: dict[SignalType, tuple[float, float]] = {
-    SignalType(Constellation.GPS, 1, "C"): (300 * phase_sigma_a, 450 * phase_sigma_b),
-    SignalType(Constellation.GPS, 2, "W"): (
-        2 * 300 * phase_sigma_a,
-        2 * 450 * phase_sigma_b,
-    ),
+    SignalType(Constellation.GPS, 1, "C"): (300 * phase_sigma_a, 650 * phase_sigma_b),
+    SignalType(Constellation.GPS, 2, "W"): (500 * phase_sigma_a, 650 * phase_sigma_b),
     SignalType(Constellation.GLO, 1, "C"): (700 * phase_sigma_a, 800 * phase_sigma_b),
     SignalType(Constellation.GLO, 2, "C"): (700 * phase_sigma_a, 800 * phase_sigma_b),
-    SignalType(Constellation.GAL, 1, "C"): (350 * phase_sigma_a, 500 * phase_sigma_b),
-    SignalType(Constellation.GAL, 7, "Q"): (350 * phase_sigma_a, 500 * phase_sigma_b),
+    SignalType(Constellation.GAL, 1, "C"): (500 * phase_sigma_a, 650 * phase_sigma_b),
+    SignalType(Constellation.GAL, 7, "Q"): (500 * phase_sigma_a, 800 * phase_sigma_b),
     SignalType(Constellation.BDS, 2, "I"): (300 * phase_sigma_a, 450 * phase_sigma_b),
 }
 
