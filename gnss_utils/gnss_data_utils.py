@@ -110,6 +110,7 @@ class GnssSignalChannel:
         self.sat_clock_bias_m = None  # Satellite clock bias in meters
         self.sat_group_delay_m = None  # Satellite group delay in meters
         self.sat_clock_drift_mps = None  # Satellite clock drift in meters per second
+        self.cycle_slip_status = gnssConst.CycleSlipType.NOT_AVAILABLE
 
     def addMeasurementFromObs(
         self,
@@ -233,8 +234,6 @@ class GnssSignalChannel:
         self.code_m += self.sat_clock_bias_m
         self.phase_m += self.sat_clock_bias_m
         self.doppler_mps += self.sat_clock_drift_mps
-
-        self.cycle_slip_status = gnssConst.CycleSlipType.NOT_AVAILABLE
 
 
 class GnssMeasurementChannel(GnssSignalChannel):

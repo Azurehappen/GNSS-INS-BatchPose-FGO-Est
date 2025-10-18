@@ -356,7 +356,7 @@ class RtkInsFgo:
         initial_bias = gtsam.imuBias.ConstantBias(np.zeros(3), np.zeros(3))
 
         pose_prior_noise = gtsam.noiseModel.Diagonal.Sigmas(
-            np.concatenate((INIT_ATTITUDE_STD_RAD, np.full(3, 1.0)))
+            np.concatenate((INIT_ATTITUDE_STD_RAD, np.full(3, 40.0)))
         )
         velocity_prior_noise = gtsam.noiseModel.Isotropic.Sigma(3, 5.0)
         bias_prior_noise = gtsam.noiseModel.Diagonal.Sigmas(

@@ -88,7 +88,7 @@ class GnssParameters:
     enable_glonass: bool = True
     enable_beidou: bool = True
 
-    ambiguity_mode: AmbiguityMode = AmbiguityMode.INSTANTANEOUS
+    ambiguity_mode: AmbiguityMode = AmbiguityMode.CONTINUOUS
 
 
 phase_sigma_a = 0.003  # meters

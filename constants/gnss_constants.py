@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 SPEED_OF_LIGHT_MS = 299792458.0  # Speed of light in meters per second
+LEAP_SECONDS = 18  # Current leap seconds between GPS time and UTC
 
 
 class Constellation(Enum):
