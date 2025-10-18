@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from gnss_utils.time_utils import GpsTime
 from gnss_utils.model_utils import compute_world_frame_coord_from_ecef
+from constants.gnss_constants import LEAP_SECONDS
 from typing import Dict
 import numpy as np
 import pandas as pd
@@ -59,7 +60,11 @@ def parse_ground_truth_log(file_path: str) -> Dict[GpsTime, GroundTruthSingleEpo
 
             date = parts[0]
             time = parts[1]
-            epoch = GpsTime.fromDatetime(timestamp=pd.Timestamp(f"{date} {time}"))
+            timestamp_utc = pd.Timestamp(f"{date} {time}")
+            # Ground truth timestamps are logged in UTC; convert to GPS by adding leap seconds
+            epoch = GpsTime.fromDatetime(
+                timestamp=timestamp_utc + pd.Timedelta(seconds=LEAP_SECONDS)
+            )
 
             lat_deg = float(parts[3])
             lon_deg = float(parts[4])
