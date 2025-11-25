@@ -1,4 +1,4 @@
-# UrbanRTK-INS-FGO
+# Batch-RTK-INS
 
 GNSS/INS factor-graph optimizer for RTK-level positioning in challenging (urban) environments. The solver blends IMU preintegration, robust double-differenced GNSS code/phase factors, and optional ISAM2 incremental updates, with a final full-trajectory Levenberg–Marquardt batch solve if desired.
 
