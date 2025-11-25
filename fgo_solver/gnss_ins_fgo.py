@@ -354,6 +354,13 @@ class RtkInsFgo:
                     self._extract_epoch_result(
                         epoch, pose_key, vel_key, bias_key, estimate
                     )
+            elif self.use_isam and self._epoch_keys and self._latest_estimate is not None:
+                # Reconstruct log from the final ISAM estimate to return a full-trajectory snapshot.
+                self.result_log.clear()
+                for epoch, pose_key, vel_key, bias_key in self._epoch_keys:
+                    self._extract_epoch_result(
+                        epoch, pose_key, vel_key, bias_key, self._latest_estimate
+                    )
         finally:
             if progress_bar is not None:
                 progress_bar.close()
