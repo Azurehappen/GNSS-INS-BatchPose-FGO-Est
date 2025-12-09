@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
+import gtsam
 import numpy as np
 import pymap3d as pm
 from gnss_utils.gnss_dataclass import SignalType
@@ -10,6 +11,11 @@ import constants.common_utils as comm_utils
 class AmbiguityMode(Enum):
     CONTINUOUS = 1
     INSTANTANEOUS = 2
+
+
+class AmbPropagationMode(Enum):
+    CONSTANT = 1
+    RANDOM_WALK = 2
 
 
 @dataclass
@@ -43,6 +49,10 @@ class GnssParameters:
     enable_beidou: bool = True
 
     ambiguity_mode: AmbiguityMode = AmbiguityMode.CONTINUOUS
+    amb_propagation_mode: AmbPropagationMode = AmbPropagationMode.CONSTANT
+    amb_random_walk_noise = gtsam.noiseModel.Isotropic.Sigma(
+        1, 0.1
+    )  # Ambiguity random walk noise (cycles/sqrt(s))
 
 
 phase_sigma_a = 0.003  # meters
@@ -55,6 +65,12 @@ class OutlierOptParam:
     KEEP_PHASE_WHEN_CODE_OUT: bool = (
         False  # Keep phase measurements when code is outlier
     )
+
+
+SIGNAL_TO_EXCLUDED_FROM_SOL: set[SignalType] = {
+    # GPS L2W is a half-wavelength signal (~12 cm), which is too small.
+    SignalType(Constellation.GPS, 2, "W"),
+}
 
 
 # SignalType -> (fact_a, fact_b)

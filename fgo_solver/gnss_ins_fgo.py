@@ -354,7 +354,9 @@ class RtkInsFgo:
                     self._extract_epoch_result(
                         epoch, pose_key, vel_key, bias_key, estimate
                     )
-            elif self.use_isam and self._epoch_keys and self._latest_estimate is not None:
+            elif (
+                self.use_isam and self._epoch_keys and self._latest_estimate is not None
+            ):
                 # Reconstruct log from the final ISAM estimate to return a full-trajectory snapshot.
                 self.result_log.clear()
                 for epoch, pose_key, vel_key, bias_key in self._epoch_keys:
@@ -621,6 +623,8 @@ class RtkInsFgo:
             defaultdict(dict)
         )
         for scid, ch in channels.items():
+            if scid.signal_type in SIGNAL_TO_EXCLUDED_FROM_SOL:
+                continue
             if ch.sat_pos_ecef_m is None:
                 continue
             elev_deg, _ = compute_sat_elev_az(
@@ -827,7 +831,7 @@ class RtkInsFgo:
             return
 
         self._force_new_ambiguity_next_epoch = False
-        prior_noise = gtsam.noiseModel.Isotropic.Sigma(1, 500.0)
+        prior_noise = gtsam.noiseModel.Isotropic.Sigma(1, 1e7)
         prior_added: Set[int] = set()
 
         for batch in pending_batches:
@@ -852,7 +856,12 @@ class RtkInsFgo:
                 use_code = cand["use_code"]
                 debug_record = cand["debug_record"]
 
-                amb_key, was_new, prior_val = self._resolve_ambiguity_key(
+                (
+                    amb_key,
+                    was_new,
+                    prior_val,
+                    prev_amb_key,
+                ) = self._resolve_ambiguity_key(
                     signal_type,
                     ch,
                     pivot_ch,
@@ -873,6 +882,8 @@ class RtkInsFgo:
 
                 meas_list.append(ch)
                 amb_keys.append(amb_key)
+                cand["amb_key"] = amb_key
+                cand["prev_amb_key"] = prev_amb_key
                 code_mask.append(use_code)
                 phase_mask.append(True)
                 code_std_list.append(code_std)
@@ -894,7 +905,25 @@ class RtkInsFgo:
                     )
                 )
 
-            for amb_key in amb_keys:
+            for cand in batch["candidates"]:
+                amb_key = cand["amb_key"] if "amb_key" in cand else None
+                prev_amb_key = cand.get("prev_amb_key")
+                if amb_key is None:
+                    continue
+                if (
+                    GnssParameters.amb_propagation_mode
+                    == AmbPropagationMode.RANDOM_WALK
+                    and prev_amb_key is not None
+                ):
+                    graph.push_back(
+                        gtsam.BetweenFactorDouble(
+                            prev_amb_key,
+                            amb_key,
+                            0.0,
+                            GnssParameters.amb_random_walk_noise,
+                        )
+                    )
+                    continue
                 if amb_key in prior_added:
                     continue
                 if values.exists(amb_key):
@@ -1195,15 +1224,20 @@ class RtkInsFgo:
         rel_time: float,
         force_new: bool,
         values: gtsam.Values,
-    ) -> Tuple[int, bool, Optional[float]]:
+    ) -> Tuple[int, bool, Optional[float], Optional[int]]:
         scid = ch.signal_id
         state = self.ambiguities.get(scid)
         slip_not_detected = (
             ch.cycle_slip_status is not None
             and ch.cycle_slip_status == CycleSlipType.NOT_DETECTED
         )
+        is_stale = (
+            state is not None and rel_time - state.last_update_sec > self.window_size_s
+        )
 
-        if state is None or force_new or not slip_not_detected:
+        prev_key_for_between: Optional[int] = None
+
+        if state is None or force_new or not slip_not_detected or is_stale:
             key = AMB_KEY(self.next_amb_idx)
             self.next_amb_idx += 1
             init_val = self._initialize_ambiguity(ch, pivot_ch)
@@ -1215,10 +1249,23 @@ class RtkInsFgo:
                 last_update_sec=rel_time,
                 last_epoch_idx=self.current_epoch_idx,
             )
-            return key, True, None
+            return key, True, None, None
 
-        self.ambiguities[scid].last_update_sec = rel_time
-        self.ambiguities[scid].last_epoch_idx = self.current_epoch_idx
+        used_last_epoch = state.last_epoch_idx == self.current_epoch_idx - 1
+        if not used_last_epoch:
+            key = AMB_KEY(self.next_amb_idx)
+            self.next_amb_idx += 1
+            init_val = self._initialize_ambiguity(ch, pivot_ch)
+            values.insert(key, init_val)
+            self.ambiguities[scid] = AmbiguityState(
+                key=key,
+                signal_type=signal_type,
+                pivot_id=pivot_ch.signal_id,
+                last_update_sec=rel_time,
+                last_epoch_idx=self.current_epoch_idx,
+            )
+            return key, True, None, None
+
         prior_val = None
         if values.exists(state.key):
             prior_val = values.atDouble(state.key)
@@ -1226,7 +1273,21 @@ class RtkInsFgo:
             state.key
         ):
             prior_val = self._latest_estimate.atDouble(state.key)
-        return state.key, False, prior_val
+
+        if GnssParameters.amb_propagation_mode == AmbPropagationMode.RANDOM_WALK:
+            prev_key_for_between = state.key
+            key = AMB_KEY(self.next_amb_idx)
+            self.next_amb_idx += 1
+            init_val = prior_val if prior_val is not None else 0.0
+            values.insert(key, init_val)
+            self.ambiguities[scid].key = key
+            self.ambiguities[scid].last_update_sec = rel_time
+            self.ambiguities[scid].last_epoch_idx = self.current_epoch_idx
+            return key, False, prior_val, prev_key_for_between
+
+        self.ambiguities[scid].last_update_sec = rel_time
+        self.ambiguities[scid].last_epoch_idx = self.current_epoch_idx
+        return state.key, False, prior_val, None
 
     def _measurement_std(
         self, signal_type: SignalType, elev_deg: float
